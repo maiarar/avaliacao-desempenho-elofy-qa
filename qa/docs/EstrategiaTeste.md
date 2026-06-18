@@ -27,6 +27,7 @@ Nesse documento, detalharei a estratégia de teste que apliquei para o teste té
 
 ## Onde estão os testes
 
-Para encontrar os testes, acesse o diretório [tests](./tests), onde estão organizados por tipo (integração e E2E) e por funcionalidade (ciclos, avaliações, etc).
+Para encontrar os testes, acesse o diretório [tests](./tests/), onde estão organizados por tipo e por funcionalidade.
 
-TODO: finalizar a escrita do documento, detalhando os cenários de teste e a estimativa de esforço para cada um.
+### Testes de API
+- Os testes de API estão localizados no diretório [tests/api](./tests/api/), onde é possível encontrar uma pasta com a collection do Postman, o arquivo OpenAPI (Swagger). Na collection, já existem validações simples de retorno, mas o foco é a automação dos testes de API, que estão localizados no diretório [tests/api/automacao](./tests/api/automacao/), 

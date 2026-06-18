@@ -1,0 +1,453 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Elofy - Avaliação de Desempenho",
+    "description": "# API Avaliação de Desempenho - Suíte de Testes\n\nEsta collection contém os testes automatizados para a API do sistema de **Avaliação de Desempenho**. O objetivo é validar as regras de negócio de estruturação do organograma, criação de ciclos e a geração hierárquica automática das avaliações.\n\n## Estrutura de Pastas\n\nAs requisições estão organizadas por recursos e fluxos lógicos:\n\n1. **Times e Colaboradores:** validação do organograma hierárquico (sem limite de profundidade) e vínculos com gestores diretos.\n2. **Competências:** gestão do catálogo base do que será avaliado.\n3. **Ciclos:** regras de negócio focadas no período, vinculação de participantes e transições de estado (Rascunho -> Ativo -> Finalizado).\n4. **Avaliações:** validação do processo de notas (autoavaliação, gestor direto e pares do mesmo time).\n\n> essa collection não possui testes de autenticação, conforme explicado no documento EstrategiaTeste.md. Porém, se tivesse, eles estariam organizados em uma pasta específica, para garantir a cobertura de cenários de acesso autorizado e não autorizado, junto com a configuração das variáveis de ambiente para tokens válidos e inválidos.",
+    "version": "1.0.0"
+  },
+  "servers": [],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          ""
+        ],
+        "summary": "/health",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/competencies": {
+      "get": {
+        "tags": [
+          ""
+        ],
+        "summary": "/competencies",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          ""
+        ],
+        "summary": "/competencies",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "{\n    \"name\":\"Competencia_{{$timestamp}}\",\n    \"team_id\":{{team_id}},\n    \"manager_id\":{{manager_id}}\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/competencies/{{competency_id}}": {
+      "put": {
+        "tags": [
+          ""
+        ],
+        "summary": "/competencies/:id",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "name": "Competência_X",
+                  "description": "Atualização da descrição da competência"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          ""
+        ],
+        "summary": "/competencies/:id",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/teams": {
+      "get": {
+        "tags": [
+          "GET "
+        ],
+        "summary": "GET /teams",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "POST "
+        ],
+        "summary": "POST /teams",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "{\n    \"name\": \"Time_{{$timestamp}}\",\n    \"parent_team_id\": {{team_id}}\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/teams/{{team_id}}": {
+      "put": {
+        "tags": [
+          "PUT "
+        ],
+        "summary": "PUT /teams/:id",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "name": "Time_XX",
+                  "parent_team_id": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "DELETE "
+        ],
+        "summary": "DELETE /teams/:id",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/employees": {
+      "get": {
+        "tags": [
+          ""
+        ],
+        "summary": "/employees",
+        "description": "Retorna a lista de todos os funcionários cadastrados.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          ""
+        ],
+        "summary": "/employees",
+        "description": "Cria um novo funcionário com os dados fornecidos no corpo da requisição.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "{\n    \"name\": \"Nome_{{$timestamp}}\",\n    \"team_id\": {{team_id}},\n    \"manager_id\": {{manager_id}}\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/employees/{{employee_id}}": {
+      "put": {
+        "tags": [
+          ""
+        ],
+        "summary": "/employees/:id",
+        "description": "Atualiza os dados de um funcionário existente identificado pelo ID.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "{\n    \"name\": \"Nome_XX\",\n    \"team_id\": {{team_id}},\n    \"manager_id\": {{manager_id}}\n}"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          ""
+        ],
+        "summary": "/employees/:id",
+        "description": "Remove um funcionário pelo ID informado na URL.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/cycles": {
+      "post": {
+        "tags": [
+          ""
+        ],
+        "summary": "/cycles",
+        "description": "Cria um novo ciclo com os dados fornecidos no corpo da requisição.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "name": "Avaliação_{{$timestamp}}",
+                  "start_date": "{{data_inicio}}",
+                  "end_date": "{{data_fim}}",
+                  "use_weights": false,
+                  "team_ids": [
+                    1
+                  ],
+                  "competencies": [
+                    {
+                      "competency_id": 1,
+                      "weight": null
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          ""
+        ],
+        "summary": "/cycles",
+        "description": "Retorna a lista de todos os ciclos cadastrados.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/cycles/{{id_cycle}}": {
+      "get": {
+        "tags": [
+          ""
+        ],
+        "summary": "/cycles/:id",
+        "description": "Retorna os detalhes de um ciclo específico identificado pelo ID.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          ""
+        ],
+        "summary": "/cycles/:id",
+        "description": "Atualiza os dados de um ciclo existente identificado pelo ID.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "name": "Avaliação_XX",
+                  "start_date": "{{data_inicio}}",
+                  "end_date": "{{data_fim}}",
+                  "use_weights": false,
+                  "team_ids": [
+                    1
+                  ],
+                  "competencies": [
+                    {
+                      "competency_id": 1,
+                      "weight": null
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cycles/{{id_cycle}}/start": {
+      "post": {
+        "tags": [
+          ""
+        ],
+        "summary": "/cycles/:id/start",
+        "description": "Inicia um ciclo existente, alterando seu status para ativo. O ciclo deve estar no status draft para ser iniciado.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/cycles/{{id_cycle}}/close": {
+      "post": {
+        "tags": [
+          ""
+        ],
+        "summary": "/cycles/:id/close",
+        "description": "Encerra um ciclo ativo, alterando seu status para closed. O ciclo deve estar no status active para ser encerrado.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/evaluations/{{id_evaluation}}/answer": {
+      "post": {
+        "tags": [
+          ""
+        ],
+        "summary": "/evaluations/:id/answer",
+        "description": "Registra as respostas de uma avaliação específica identificada pelo ID.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "{\n    \"evaluator_id\": {{employee_id}},\n    \"answers\": [\n        {\n            \"competency_id\": {{competency_id}},\n            \"score\": 1\n        }\n    ]\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/evaluations": {
+      "get": {
+        "tags": [
+          ""
+        ],
+        "summary": "/evaluations",
+        "description": "Retorna a lista de todas as avaliações cadastradas.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/evaluations/{{id_evaluation}}": {
+      "get": {
+        "tags": [
+          ""
+        ],
+        "summary": "/evaluations/:id",
+        "description": "Retorna os detalhes de uma avaliação específica identificada pelo ID.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {},
+    "securitySchemes": {}
+  }
+}

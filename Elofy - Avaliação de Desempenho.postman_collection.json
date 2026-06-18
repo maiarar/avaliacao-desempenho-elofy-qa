@@ -1,0 +1,2019 @@
+{
+	"info": {
+		"_postman_id": "765334bd-9ab1-44b3-90fb-3cfd3a575162",
+		"name": "Elofy - Avaliação de Desempenho",
+		"description": "# API Avaliação de Desempenho - Suíte de Testes\n\nEsta collection contém os testes automatizados para a API do sistema de **Avaliação de Desempenho**. O objetivo é validar as regras de negócio de estruturação do organograma, criação de ciclos e a geração hierárquica automática das avaliações.\n\n## Estrutura de Pastas\n\nAs requisições estão organizadas por recursos e fluxos lógicos:\n\n1. **Times e Colaboradores:** validação do organograma hierárquico (sem limite de profundidade) e vínculos com gestores diretos.\n2. **Competências:** gestão do catálogo base do que será avaliado.\n3. **Ciclos:** regras de negócio focadas no período, vinculação de participantes e transições de estado (Rascunho -> Ativo -> Finalizado).\n4. **Avaliações:** validação do processo de notas (autoavaliação, gestor direto e pares do mesmo time).\n\n> essa collection não possui testes de autenticação, conforme explicado no documento EstrategiaTeste.md. Porém, se tivesse, eles estariam organizados em uma pasta específica, para garantir a cobertura de cenários de acesso autorizado e não autorizado, junto com a configuração das variáveis de ambiente para tokens válidos e inválidos.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "56012554"
+	},
+	"item": [
+		{
+			"name": "Mapeamento por endpoint",
+			"item": [
+				{
+					"name": "health",
+					"item": [
+						{
+							"name": "/health",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code é 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Corpo da resposta tem ok igual a true\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData.ok).to.eql(true);",
+											"});",
+											"",
+											"// caso tivéssemos testes de tempo de resposta ",
+											"// pm.test(\"Tempo de resposta é aceitável (abaixo de 2000ms)\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"// });"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/health",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"health"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "Endpoints para verificação do estado de saúde da API.\n\nUtilize estes endpoints para monitorar se a aplicação está operacional e respondendo corretamente. Ideal para uso em health checks de infraestrutura, load balancers e pipelines de CI/CD.\n\n**Request:**\n\n- **Health** - verifica se a API está no ar. Retorna `{\"ok\": true}` com status 200 quando a aplicação está saudável."
+				},
+				{
+					"name": "competencies",
+					"item": [
+						{
+							"name": "/competencies",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"const body = JSON.parse(pm.request.body.raw);",
+											"",
+											"pm.test(\"Status code é 201 - Criado com sucesso\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Tempo de resposta abaixo de 2000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um objeto JSON\", function () {",
+											"    pm.expect(json).to.be.an(\"object\");",
+											"});",
+											"",
+											"pm.test(\"Resposta contém o campo id\", function () {",
+											"    pm.expect(json).to.have.property(\"id\");",
+											"});",
+											"",
+											"pm.test(\"O id retornado é um número\", function () {",
+											"    pm.expect(json.id).to.be.a(\"number\");",
+											"});",
+											"",
+											"pm.test(\"Resposta contém o campo name\", function () {",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"});",
+											"",
+											"pm.test(\"O name retornado corresponde ao enviado\", function () {",
+											"    pm.expect(json.name).to.eql(body.name);",
+											"});",
+											"",
+											"pm.test(\"Salva o id criado na variável de ambiente\", function () {",
+											"    pm.environment.set(\"competency_id\", json.id);",
+											"    pm.expect(pm.environment.get(\"competency_id\")).to.eql(json.id);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\":\"Competencia_{{$timestamp}}\",\n    \"team_id\":{{team_id}},\n    \"manager_id\":{{manager_id}}\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{env}}/competencies",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"competencies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/competencies",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Testes de resposta",
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status code é 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// pm.test(\"Response time é menor que 2000ms\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"// });",
+											"",
+											"pm.test(\"Response é um JSON array\", function () {",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Array não está vazio\", function () {",
+											"    pm.expect(json.length).to.be.above(0);",
+											"});",
+											"",
+											"pm.test(\"Cada item tem um id e name\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item).to.have.property(\"id\");",
+											"        pm.expect(item).to.have.property(\"name\");",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"id é um number\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item.id).to.be.a(\"number\");",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"name é uma string válida\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item.name).to.be.a(\"string\").and.not.empty;",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/competencies",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"competencies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/competencies/:id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code é 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Tempo de resposta está abaixo de 2000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"});",
+											"",
+											"pm.test(\"Content-Type da resposta é application/json\", function () {",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Body da resposta é um JSON válido\", function () {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Body da resposta contém o campo 'name' atualizado\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData.name).to.eql(\"Competência_X\");",
+											"});",
+											"",
+											"// pm.test(\"Body da resposta contém o campo 'description' atualizado\", function () {",
+											"//     const jsonData = pm.response.json();",
+											"//     pm.expect(jsonData.description).to.eql(\"Atualização da descrição da competência\");",
+											"// }); //esse seria para mim um teste válido",
+											"",
+											"pm.test(\"Body da resposta possui um campo identificador 'id'\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.have.any.keys(\"id\", \"_id\", \"uuid\", \"competency_id\");",
+											"});",
+											"",
+											"pm.test(\"Status code não é 4xx ou 5xx\", function () {",
+											"    pm.expect(pm.response.code).to.be.below(400);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Competência_X\", \n    \"description\": \"Atualização da descrição da competência\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{env}}/competencies/{{competency_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"competencies",
+										"{{competency_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/competencies/:id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code é 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											"",
+											"pm.test(\"Tempo de resposta abaixo de 2000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"});",
+											"",
+											"pm.test(\"Resposta confirma a exclusão\", function () {",
+											"    pm.expect(pm.response.text()).to.be.empty;",
+											"});",
+											"",
+											"pm.test(\"Variável de ambiente ainda está definida\", function () {",
+											"    const competency = pm.environment.get(\"competency_id\");",
+											"    pm.expect(competency).to.not.be.undefined;",
+											"    pm.expect(competency).to.not.be.null;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/competencies/{{competency_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"competencies",
+										"{{competency_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "Endpoints para gerenciamento de competências. Cobre o CRUD completo do recurso `/competencies`.\n\n## Endpoints\n\n| Método | Rota | Descrição |\n| --- | --- | --- |\n| GET | `/competencies` | Lista todas as competências |\n| POST | `/competencies` | Cria uma nova competência |\n| PUT | `/competencies/:id` | Atualiza uma competência existente |\n| DELETE | `/competencies/:id` | Remove uma competência |\n\n## Variáveis utilizadas\n\n- `env` URL base do ambiente (ex: `http://localhost:3000`)\n    \n- `competency_id` ID da competência utilizado nas rotas de PUT e DELETE"
+				},
+				{
+					"name": "teams",
+					"item": [
+						{
+							"name": "POST /teams",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status code é 201 - Criado com sucesso\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"// pm.test(\"Tempo de resposta abaixo de 2000ms\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"// });",
+											"",
+											"pm.test(\"Resposta é um objeto JSON\", function () {",
+											"    pm.expect(json).to.be.an(\"object\");",
+											"});",
+											"",
+											"pm.test(\"Resposta contém o campo id\", function () {",
+											"    pm.expect(json).to.have.property(\"id\");",
+											"});",
+											"",
+											"pm.test(\"O campo id é um número\", function () {",
+											"    pm.expect(json.id).to.be.a(\"number\");",
+											"});",
+											"",
+											"pm.test(\"Resposta contém o campo name\", function () {",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"});",
+											"",
+											"pm.test(\"O campo name é uma string não vazia\", function () {",
+											"    pm.expect(json.name).to.be.a(\"string\").and.not.empty;",
+											"});",
+											"",
+											"pm.test(\"Resposta contém o campo parent_team_id\", function () {",
+											"    pm.expect(json).to.have.property(\"parent_team_id\");",
+											"});",
+											"",
+											"pm.test(\"Salva o id criado na variável de ambiente team_id\", function () {",
+											"    pm.environment.set(\"team_id\", json.id);",
+											"    pm.expect(pm.environment.get(\"team_id\")).to.eql(json.id);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Time_{{$timestamp}}\",\n    \"parent_team_id\": null\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{env}}/teams",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"teams"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET /teams",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status code é 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// pm.test(\"Tempo de resposta abaixo de 2000ms\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"// });",
+											"",
+											"pm.test(\"Resposta é um array JSON\", function () {",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Array não está vazio\", function () {",
+											"    pm.expect(json.length).to.be.above(0);",
+											"});",
+											"",
+											"pm.test(\"Cada item possui id, name e parent_team_id\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item).to.have.property(\"id\");",
+											"        pm.expect(item).to.have.property(\"name\");",
+											"        pm.expect(item).to.have.property(\"parent_team_id\");",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"O campo id é um número\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item.id).to.be.a(\"number\");",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/teams",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"teams"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PUT /teams/:id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status code é 200 - Atualizado com sucesso\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Tempo de resposta abaixo de 2000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um objeto JSON\", function () {",
+											"    pm.expect(json).to.be.an(\"object\");",
+											"});",
+											"",
+											"pm.test(\"Resposta contém o campo id\", function () {",
+											"    pm.expect(json).to.have.property(\"id\");",
+											"});",
+											"",
+											"pm.test(\"O campo id é um número\", function () {",
+											"    pm.expect(json.id).to.be.a(\"number\");",
+											"});",
+											"",
+											"pm.test(\"Resposta contém o campo name\", function () {",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"});",
+											"",
+											"pm.test(\"O campo name foi atualizado corretamente\", function () {",
+											"    const body = JSON.parse(pm.request.body.raw);",
+											"    pm.expect(json.name).to.eql(body.name);",
+											"});",
+											"",
+											"pm.test(\"O id retornado corresponde ao team_id do ambiente\", function () {",
+											"    pm.expect(json.id).to.eql(Number(pm.environment.get(\"team_id\")));",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Time_XX\",\n    \"parent_team_id\": 1\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{env}}/teams/{{team_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"teams",
+										"{{team_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DELETE /teams/:id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code é 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											"",
+											"pm.test(\"Tempo de resposta abaixo de 2000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"});",
+											"",
+											"pm.test(\"Resposta confirma a exclusão\", function () {",
+											"    pm.expect(pm.response.text()).to.be.empty;",
+											"});",
+											"",
+											"pm.test(\"Variável de ambiente ainda está definida\", function () {",
+											"    const team = pm.environment.get(\"team_id\");",
+											"    pm.expect(team).to.not.be.undefined;",
+											"    pm.expect(team).to.not.be.null;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/teams/{{team_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"teams",
+										"{{team_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "Pasta responsável pelo gerenciamento de **times** da aplicação. Contém os endpoints de CRUD completo para o recurso `/teams`.\n\n## Endpoints\n\n| Método | Endpoint | Descrição |\n| --- | --- | --- |\n| GET | `/teams` | Lista todos os times cadastrados |\n| POST | `/teams` | Cria um novo time |\n| PUT | `/teams/:id` | Atualiza os dados de um time existente |\n| DELETE | `/teams/:id` | Remove um time pelo ID |\n\n## Variáveis utilizadas\n\n- `env -` URL base do ambiente (ex: `http://localhost:3000`)\n    \n- `team_id`\\- ID do time, salvo automaticamente após o POST\n    \n- `manager_id`\\- ID do gestor responsável pelo time\n    \n\n## Observações\n\n- Execute os requests na ordem: **GET → POST → PUT → DELETE** para garantir que as variáveis de ambiente sejam populadas corretamente.\n    \n- O POST salva o `id` retornado na variável `{{team_id}}`, que é utilizada pelos requests de PUT e DELETE."
+				},
+				{
+					"name": "employees",
+					"item": [
+						{
+							"name": "POST /teams [criando um time para o teste",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status code é 201 - Criado com sucesso\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"// pm.test(\"Tempo de resposta abaixo de 2000ms\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"// });",
+											"",
+											"pm.test(\"Resposta é um objeto JSON\", function () {",
+											"    pm.expect(json).to.be.an(\"object\");",
+											"});",
+											"",
+											"pm.test(\"Resposta contém o campo id\", function () {",
+											"    pm.expect(json).to.have.property(\"id\");",
+											"});",
+											"",
+											"pm.test(\"O campo id é um número\", function () {",
+											"    pm.expect(json.id).to.be.a(\"number\");",
+											"});",
+											"",
+											"pm.test(\"Resposta contém o campo name\", function () {",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"});",
+											"",
+											"pm.test(\"O campo name é uma string não vazia\", function () {",
+											"    pm.expect(json.name).to.be.a(\"string\").and.not.empty;",
+											"});",
+											"",
+											"pm.test(\"Resposta contém o campo parent_team_id\", function () {",
+											"    pm.expect(json).to.have.property(\"parent_team_id\");",
+											"});",
+											"",
+											"pm.test(\"Salva o id criado na variável de ambiente team_id\", function () {",
+											"    pm.environment.set(\"team_id\", json.id);",
+											"    pm.expect(pm.environment.get(\"team_id\")).to.eql(json.id);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Time_{{$timestamp}}\",\n    \"parent_team_id\": null\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{env}}/teams",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"teams"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/employees",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 201 - Criado com sucesso\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um objeto\", function () {",
+											"    pm.expect(json).to.be.an(\"object\");",
+											"});",
+											"",
+											"pm.test(\"Resposta contém campo 'id' gerado\", function () {",
+											"    pm.expect(json).to.have.property(\"id\");",
+											"    pm.expect(json.id).to.be.a(\"number\").and.above(0);",
+											"});",
+											"",
+											"pm.test(\"Campo 'name' retornado corresponde ao enviado\", function () {",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"    pm.expect(json.name).to.be.a(\"string\").and.not.empty;",
+											"});",
+											"",
+											"pm.test(\"Campo 'team_id' está presente na resposta\", function () {",
+											"    pm.expect(json).to.have.property(\"team_id\");",
+											"    pm.expect(json.team_id).to.be.a(\"number\");",
+											"});",
+											"",
+											"pm.test(\"Campo 'manager_id' está presente na resposta\", function () {",
+											"    pm.expect(json).to.have.property(\"manager_id\");",
+											"});",
+											"",
+											"pm.test(\"Content-Type é application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\");",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Salva o ID do funcionário criado na variável de ambiente\", function () {",
+											"    pm.expect(json.id).to.be.a(\"number\");",
+											"    pm.environment.set(\"employee_id\", json.id);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Nome_{{$timestamp}}\",\n    \"team_id\": {{team_id}},\n    \"manager_id\": {{manager_id}}\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{env}}/employees",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"employees"
+									]
+								},
+								"description": "Cria um novo funcionário com os dados fornecidos no corpo da requisição."
+							},
+							"response": []
+						},
+						{
+							"name": "/employees",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 200 - OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um array\", function () {",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Array não está vazio\", function () {",
+											"    pm.expect(json.length).to.be.above(0);",
+											"});",
+											"",
+											"pm.test(\"Cada item possui os campos obrigatórios\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item).to.have.property(\"id\");",
+											"        pm.expect(item).to.have.property(\"name\");",
+											"        pm.expect(item).to.have.property(\"team_id\");",
+											"        pm.expect(item).to.have.property(\"manager_id\");",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"Campo 'id' é um número inteiro positivo\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item.id).to.be.a(\"number\");",
+											"        pm.expect(item.id).to.be.above(0);",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"Campo 'name' é uma string não vazia\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item.name).to.be.a(\"string\").and.not.empty;",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"Campo 'team_id' é um número\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item.team_id).to.be.a(\"number\");",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"Content-Type é application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\");",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{env}}/employees",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"employees"
+									]
+								},
+								"description": "Retorna a lista de todos os funcionários cadastrados."
+							},
+							"response": []
+						},
+						{
+							"name": "/employees/:id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 200 - Atualizado com sucesso\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um objeto\", function () {",
+											"    pm.expect(json).to.be.an(\"object\");",
+											"});",
+											"",
+											"pm.test(\"Campo 'id' está presente e é um número positivo\", function () {",
+											"    pm.expect(json).to.have.property(\"id\");",
+											"    pm.expect(json.id).to.be.a(\"number\").and.above(0);",
+											"});",
+											"",
+											"pm.test(\"Campo 'name' está presente e é uma string não vazia\", function () {",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"    pm.expect(json.name).to.be.a(\"string\").and.not.empty;",
+											"});",
+											"",
+											"pm.test(\"Campo 'team_id' está presente na resposta\", function () {",
+											"    pm.expect(json).to.have.property(\"team_id\");",
+											"    pm.expect(json.team_id).to.be.a(\"number\");",
+											"});",
+											"",
+											"pm.test(\"Campo 'manager_id' está presente na resposta\", function () {",
+											"    pm.expect(json).to.have.property(\"manager_id\");",
+											"});",
+											"",
+											"pm.test(\"Content-Type é application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\");",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Nome_XX\",\n    \"team_id\": {{team_id}},\n    \"manager_id\": {{manager_id}}\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{env}}/employees/{{employee_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"employees",
+										"{{employee_id}}"
+									]
+								},
+								"description": "Atualiza os dados de um funcionário existente identificado pelo ID."
+							},
+							"response": []
+						},
+						{
+							"name": "/employees/:id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.code === 200 ? pm.response.json() : null;",
+											"",
+											"pm.test(\"Status 204 - Removido com sucesso\", function () {",
+											"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+											"});",
+											"",
+											"// pm.test(\"Tempo de resposta é aceitável (menor que 2000ms)\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"// });",
+											"",
+											"pm.test(\"Resposta confirma a exclusão do funcionário\", function () {",
+											"    if (pm.response.code === 200) {",
+											"        pm.expect(json).to.be.an(\"object\");",
+											"    } else if (pm.response.code === 204) {",
+											"        pm.expect(pm.response.text()).to.be.empty;",
+											"    }",
+											"});",
+											"",
+											"pm.test(\"Variável de ambiente 'employee_id' está definida\", function () {",
+											"    const employeeId = pm.environment.get(\"employee_id\");",
+											"    pm.expect(employeeId).to.not.be.undefined;",
+											"    pm.expect(employeeId).to.not.be.null;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{env}}/employees/{{employee_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"employees",
+										"{{employee_id}}"
+									]
+								},
+								"description": "Remove um funcionário pelo ID informado na URL."
+							},
+							"response": []
+						},
+						{
+							"name": "DELETE /teams/:id [apagando o time]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code é 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											"",
+											"pm.test(\"Tempo de resposta abaixo de 2000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+											"});",
+											"",
+											"pm.test(\"Resposta confirma a exclusão\", function () {",
+											"    pm.expect(pm.response.text()).to.be.empty;",
+											"});",
+											"",
+											"pm.test(\"Variável de ambiente ainda está definida\", function () {",
+											"    const team = pm.environment.get(\"team_id\");",
+											"    pm.expect(team).to.not.be.undefined;",
+											"    pm.expect(team).to.not.be.null;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/teams/{{team_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"teams",
+										"{{team_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "Esta pasta contém os endpoints de CRUD para o recurso **employees** (funcionários).\n\n## Endpoints disponíveis\n\n| Método | Caminho | Descrição |\n| --- | --- | --- |\n| `GET` | `/employees` | Retorna a lista de todos os funcionários cadastrados. |\n| `POST` | `/employees` | Cria um novo funcionário com os dados fornecidos no corpo da requisição. |\n| `PUT` | `/employees/:id` | Atualiza os dados de um funcionário existente identificado pelo ID. |\n| `DELETE` | `/employees/:id` | Remove um funcionário pelo ID informado na URL. |\n\n## Variáveis de ambiente utilizadas\n\n- `env-` URL base da API.\n    \n- `employee_id-` ID do funcionário utilizado nas requisições que exigem identificação.\n    \n\n## Ordem de execução recomendada\n\nPara um fluxo CRUD completo, recomenda-se executar os endpoints na seguinte ordem:\n\n**POST → GET → PUT → DELETE**"
+				},
+				{
+					"name": "cycles",
+					"item": [
+						{
+							"name": "/cycles",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const moment = require('moment');",
+											"",
+											"const dataHoje = moment().format(\"YYYY-MM-DD\");",
+											"",
+											"const dataFutura = moment().add(5, 'days').format(\"YYYY-MM-DD\");",
+											"",
+											"pm.variables.set(\"data_inicio\", dataHoje);",
+											"pm.variables.set(\"data_fim\", dataFutura);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 201 - Criado com sucesso\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"// pm.test(\"Tempo de resposta abaixo de 1000ms\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(1000);",
+											"// });",
+											"",
+											"pm.test(\"Resposta contém os campos obrigatórios do ciclo\", function () {",
+											"    pm.expect(json).to.have.property(\"id\");",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"    pm.expect(json).to.have.property(\"start_date\");",
+											"    pm.expect(json).to.have.property(\"end_date\");",
+											"    pm.expect(json).to.have.property(\"status\");",
+											"});",
+											"",
+											"pm.test(\"Status do ciclo criado é 'draft'\", function () {",
+											"    pm.expect(json.status).to.eql(\"draft\");",
+											"});",
+											"",
+											"pm.test(\"ID do ciclo criado não é nulo nem indefinido\", function () {",
+											"    pm.expect(json.id).to.not.be.undefined;",
+											"    pm.expect(json.id).to.not.be.null;",
+											"});",
+											"",
+											"pm.environment.set(\"id_cycle\", json.id);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Avaliação_{{$timestamp}}\",\n    \"start_date\": \"{{data_inicio}}\",\n    \"end_date\": \"{{data_fim}}\",\n    \"use_weights\": false,\n    \"team_ids\": [\n        1\n    ],\n    \"competencies\": [\n        {\n            \"competency_id\": 1,\n            \"weight\": null\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{env}}/cycles",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"cycles"
+									]
+								},
+								"description": "Cria um novo ciclo com os dados fornecidos no corpo da requisição."
+							},
+							"response": []
+						},
+						{
+							"name": "/cycles/:id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 200 - OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// pm.test(\"Tempo de resposta abaixo de 1000ms\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(1000);",
+											"// });",
+											"",
+											"pm.test(\"Resposta contém os campos obrigatórios do ciclo\", function () {",
+											"    pm.expect(json).to.have.property(\"id\");",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"    pm.expect(json).to.have.property(\"start_date\");",
+											"    pm.expect(json).to.have.property(\"end_date\");",
+											"    pm.expect(json).to.have.property(\"status\");",
+											"    pm.expect(json).to.have.property(\"use_weights\");",
+											"    pm.expect(json).to.have.property(\"team_ids\");",
+											"    pm.expect(json).to.have.property(\"competencies\");",
+											"});",
+											"",
+											"pm.test(\"ID do ciclo retornado corresponde ao solicitado\", function () {",
+											"    pm.expect(json.id).to.eql(parseInt(pm.variables.get(\"id_cycle\")));",
+											"});",
+											"",
+											"pm.test(\"team_ids é um array\", function () {",
+											"    pm.expect(json.team_ids).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"competencies é um array\", function () {",
+											"    pm.expect(json.competencies).to.be.an(\"array\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/cycles/{{id_cycle}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"cycles",
+										"{{id_cycle}}"
+									]
+								},
+								"description": "Retorna os detalhes de um ciclo específico identificado pelo ID."
+							},
+							"response": []
+						},
+						{
+							"name": "/cycles",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 200 - OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// pm.test(\"Tempo de resposta abaixo de 1000ms\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(1000);",
+											"// });",
+											"",
+											"pm.test(\"Resposta é um array\", function () {",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Cada ciclo possui os campos obrigatórios\", function () {",
+											"    json.forEach(function (ciclo) {",
+											"        pm.expect(ciclo).to.have.property(\"id\");",
+											"        pm.expect(ciclo).to.have.property(\"name\");",
+											"        pm.expect(ciclo).to.have.property(\"start_date\");",
+											"        pm.expect(ciclo).to.have.property(\"end_date\");",
+											"        pm.expect(ciclo).to.have.property(\"status\");",
+											"        pm.expect(ciclo).to.have.property(\"use_weights\");",
+											"        pm.expect(ciclo).to.have.property(\"team_ids\");",
+											"        pm.expect(ciclo).to.have.property(\"competencies\");",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"team_ids de cada ciclo é um array\", function () {",
+											"    json.forEach(function (ciclo) {",
+											"        pm.expect(ciclo.team_ids).to.be.an(\"array\");",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"competencies de cada ciclo é um array\", function () {",
+											"    json.forEach(function (ciclo) {",
+											"        pm.expect(ciclo.competencies).to.be.an(\"array\");",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/cycles",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"cycles"
+									]
+								},
+								"description": "Retorna a lista de todos os ciclos cadastrados."
+							},
+							"response": []
+						},
+						{
+							"name": "/cycles/:id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 200 - Atualizado com sucesso\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// pm.test(\"Tempo de resposta abaixo de 1000ms\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(1000);",
+											"// });",
+											"",
+											"pm.test(\"Resposta contém os campos obrigatórios do ciclo\", function () {",
+											"    pm.expect(json).to.have.property(\"id\");",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"    pm.expect(json).to.have.property(\"start_date\");",
+											"    pm.expect(json).to.have.property(\"end_date\");",
+											"    pm.expect(json).to.have.property(\"status\");",
+											"    pm.expect(json).to.have.property(\"use_weights\");",
+											"    pm.expect(json).to.have.property(\"team_ids\");",
+											"    pm.expect(json).to.have.property(\"competencies\");",
+											"});",
+											"",
+											"pm.test(\"ID do ciclo atualizado corresponde ao solicitado\", function () {",
+											"    pm.expect(json.id).to.eql(parseInt(pm.variables.get(\"id_cycle\")));",
+											"});",
+											"",
+											"pm.test(\"Nome foi atualizado corretamente\", function () {",
+											"    pm.expect(json.name).to.eql(\"Avaliação_XX\");",
+											"});",
+											"",
+											"pm.test(\"team_ids é um array\", function () {",
+											"    pm.expect(json.team_ids).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"competencies é um array\", function () {",
+											"    pm.expect(json.competencies).to.be.an(\"array\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const moment = require('moment');",
+											"",
+											"const dataHoje = moment().format(\"YYYY-MM-DD\");",
+											"",
+											"const dataFutura = moment().add(5, 'days').format(\"YYYY-MM-DD\");",
+											"",
+											"pm.variables.set(\"data_inicio\", dataHoje);",
+											"pm.variables.set(\"data_fim\", dataFutura);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Avaliação_XX\",\n    \"start_date\": \"{{data_inicio}}\",\n    \"end_date\": \"{{data_fim}}\",\n    \"use_weights\": false,\n    \"team_ids\": [\n        1\n    ],\n    \"competencies\": [\n        {\n            \"competency_id\": 1,\n            \"weight\": null\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{env}}/cycles/{{id_cycle}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"cycles",
+										"{{id_cycle}}"
+									]
+								},
+								"description": "Atualiza os dados de um ciclo existente identificado pelo ID."
+							},
+							"response": []
+						},
+						{
+							"name": "/cycles/:id/start",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 200 - Ciclo iniciado com sucesso\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// pm.test(\"Tempo de resposta abaixo de 1000ms\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(1000);",
+											"// });",
+											"",
+											"pm.test(\"Resposta contém os campos obrigatórios\", function () {",
+											"    pm.expect(json).to.have.property(\"cycle_id\");",
+											"    pm.expect(json).to.have.property(\"status\");",
+											"    pm.expect(json).to.have.property(\"evaluations_generated\");",
+											"    pm.expect(json).to.have.property(\"started_at\");",
+											"});",
+											"",
+											"pm.test(\"Status do ciclo é 'active'\", function () {",
+											"    pm.expect(json.status).to.eql(\"active\");",
+											"});",
+											"",
+											"pm.test(\"cycle_id corresponde ao solicitado\", function () {",
+											"    pm.expect(json.cycle_id).to.eql(parseInt(pm.variables.get(\"id_cycle\")));",
+											"});",
+											"",
+											"pm.test(\"evaluations_generated é um número maior que zero\", function () {",
+											"    pm.expect(json.evaluations_generated).to.be.a(\"number\");",
+											"    pm.expect(json.evaluations_generated).to.be.above(0);",
+											"});",
+											"",
+											"pm.test(\"started_at é uma data válida no formato YYYY-MM-DD\", function () {",
+											"    pm.expect(json.started_at).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{env}}/cycles/{{id_cycle}}/start",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"cycles",
+										"{{id_cycle}}",
+										"start"
+									]
+								},
+								"description": "Inicia um ciclo existente, alterando seu status para ativo. O ciclo deve estar no status draft para ser iniciado."
+							},
+							"response": []
+						},
+						{
+							"name": "/cycles/:id/close",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 200 - Ciclo encerrado com sucesso\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// pm.test(\"Tempo de resposta abaixo de 1000ms\", function () {",
+											"//     pm.expect(pm.response.responseTime).to.be.below(1000);",
+											"// });",
+											"",
+											"pm.test(\"Resposta contém os campos obrigatórios\", function () {",
+											"    pm.expect(json).to.have.property(\"cycle_id\");",
+											"    pm.expect(json).to.have.property(\"status\");",
+											"});",
+											"",
+											"pm.test(\"Status do ciclo é 'closed'\", function () {",
+											"    pm.expect(json.status).to.eql(\"closed\");",
+											"});",
+											"",
+											"pm.test(\"cycle_id corresponde ao solicitado\", function () {",
+											"    pm.expect(json.cycle_id).to.eql(parseInt(pm.variables.get(\"id_cycle\")));",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{env}}/cycles/{{id_cycle}}/close",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"cycles",
+										"{{id_cycle}}",
+										"close"
+									]
+								},
+								"description": "Encerra um ciclo ativo, alterando seu status para closed. O ciclo deve estar no status active para ser encerrado."
+							},
+							"response": []
+						}
+					],
+					"description": "Agrupa os endpoints responsáveis pelo gerenciamento de ciclos de avaliação de desempenho.\n\nPermite criar, consultar, atualizar e controlar o ciclo de vida dos ciclos, incluindo as ações de iniciar (start) e encerrar (close).\n\nOs ciclos passam pelos status: draft → active → closed.",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {},
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"requests": {},
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "evaluation",
+					"item": [
+						{
+							"name": "/evaluations/:id/answer",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"evaluator_id\": {{employee_id}},\n    \"answers\": [\n        {\n            \"competency_id\": {{competency_id}},\n            \"score\": 1\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{env}}/evaluations/{{evaluation_id}}/answer",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"evaluations",
+										"{{evaluation_id}}",
+										"answer"
+									]
+								},
+								"description": "Registra as respostas de uma avaliação específica identificada pelo ID.\n\nPara conseguir rodar esse comando, é importante ter um id único que já não foi utilizado."
+							},
+							"response": []
+						},
+						{
+							"name": "/evaluations?cycle_id={{id_cycle}}&evaluator_id={{id_evaluator}}&evaluated_id={{id_evaluated}}&status={{status}}",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 200 - OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Tempo de resposta abaixo de 1000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um array\", function () {",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Todas as avaliações pertencem ao ciclo filtrado\", function () {",
+											"    const idCiclo = parseInt(pm.variables.get(\"id_cycle\"));",
+											"    json.forEach(function (avaliacao) {",
+											"        pm.expect(avaliacao.cycle_id).to.eql(idCiclo);",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/evaluations?cycle_id={{id_cycle}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"evaluations"
+									],
+									"query": [
+										{
+											"key": "cycle_id",
+											"value": "{{id_cycle}}"
+										},
+										{
+											"key": "evaluator_id",
+											"value": "{{employee_id}}",
+											"disabled": true
+										},
+										{
+											"key": "evaluated_id",
+											"value": "{{id_evaluated}}",
+											"disabled": true
+										},
+										{
+											"key": "status",
+											"value": "{{status}}",
+											"disabled": true
+										}
+									]
+								},
+								"description": "Retorna as avaliações filtradas combinando ciclo, avaliador, avaliado e status simultaneamente."
+							},
+							"response": []
+						},
+						{
+							"name": "/evaluations/:id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 200 - OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Tempo de resposta abaixo de 1000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+											"});",
+											"",
+											"pm.test(\"Resposta contém os campos obrigatórios da avaliação\", function () {",
+											"    pm.expect(json).to.have.property(\"id\");",
+											"    pm.expect(json).to.have.property(\"cycle_id\");",
+											"    pm.expect(json).to.have.property(\"evaluator_id\");",
+											"    pm.expect(json).to.have.property(\"evaluated_id\");",
+											"    pm.expect(json).to.have.property(\"status\");",
+											"});",
+											"",
+											"pm.test(\"ID da avaliação corresponde ao solicitado\", function () {",
+											"    pm.expect(json.id).to.eql(parseInt(pm.variables.get(\"evaluation_id\")));",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/evaluations/{{evaluation_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"evaluations",
+										"{{evaluation_id}}"
+									]
+								},
+								"description": "Retorna os detalhes de uma avaliação específica identificada pelo ID."
+							},
+							"response": []
+						},
+						{
+							"name": "/evaluations",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status 200 - OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Tempo de resposta abaixo de 1000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um array\", function () {",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Cada avaliação possui os campos obrigatórios\", function () {",
+											"    json.forEach(function (avaliacao) {",
+											"        pm.expect(avaliacao).to.have.property(\"id\");",
+											"        pm.expect(avaliacao).to.have.property(\"cycle_id\");",
+											"        pm.expect(avaliacao).to.have.property(\"evaluator_id\");",
+											"        pm.expect(avaliacao).to.have.property(\"evaluated_id\");",
+											"        pm.expect(avaliacao).to.have.property(\"status\");",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/evaluations",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"evaluations"
+									]
+								},
+								"description": "Retorna a lista de todas as avaliações cadastradas."
+							},
+							"response": []
+						}
+					],
+					"description": "Agrupa os endpoints responsáveis pelo gerenciamento de avaliações de desempenho. Permite listar todas as avaliações, consultar uma avaliação específica por ID, filtrar avaliações por ciclo, avaliador, avaliado e status, além de registrar as respostas de uma avaliação."
+				},
+				{
+					"name": "reports",
+					"item": [
+						{
+							"name": "/reports/teams?team_id={{id_team}}",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status code é 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um array\", function () {",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Cada item possui os campos obrigatórios\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item).to.have.property(\"id\");",
+											"        pm.expect(item).to.have.property(\"name\");",
+											"        pm.expect(item).to.have.property(\"level\");",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/reports/teams?team_id={{team_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"reports",
+										"teams"
+									],
+									"query": [
+										{
+											"key": "team_id",
+											"value": "{{team_id}}"
+										}
+									]
+								},
+								"description": "Retorna o relatório de desempenho de um time específico, filtrado pelo ID do time."
+							},
+							"response": []
+						},
+						{
+							"name": "/reports/employees?employee_id={{id_employee}}",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status code é 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um array ou objeto\", function () {",
+											"    pm.expect(json).to.satisfy(function (val) {",
+											"        return typeof val === \"object\" && val !== null;",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"Resposta contém dados do colaborador\", function () {",
+											"    const item = Array.isArray(json) ? json[0] : json;",
+											"    pm.expect(item).to.have.property(\"id\");",
+											"    pm.expect(item).to.have.property(\"name\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"    pm.environment.set(\"employee_id\", 1);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/reports/employees?employee_id={{employee_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"reports",
+										"employees"
+									],
+									"query": [
+										{
+											"key": "employee_id",
+											"value": "{{employee_id}}"
+										}
+									]
+								},
+								"description": "Retorna o relatório de desempenho de um colaborador específico, filtrado pelo ID do funcionário."
+							},
+							"response": []
+						},
+						{
+							"name": "/reports/evaluations/analytical?cycle_id={{id_cycle}}",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status code é 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um array\", function () {",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Cada item possui evaluated_id e evaluated_name\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item).to.have.property(\"evaluated_id\");",
+											"        pm.expect(item).to.have.property(\"evaluated_name\");",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/reports/evaluations/analytical?cycle_id={{cycle_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"reports",
+										"evaluations",
+										"analytical"
+									],
+									"query": [
+										{
+											"key": "cycle_id",
+											"value": "{{cycle_id}}"
+										}
+									]
+								},
+								"description": "Retorna o relatório analítico das avaliações de um ciclo específico, com detalhamento individual de cada avaliação."
+							},
+							"response": []
+						},
+						{
+							"name": "/reports/evaluations/synthetic?cycle_id={{id_cycle}}",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status code é 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um array\", function () {",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Cada item possui evaluated_id e evaluated_name\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item).to.have.property(\"evaluated_id\");",
+											"        pm.expect(item).to.have.property(\"evaluated_name\");",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/reports/evaluations/synthetic?cycle_id={{cycle_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"reports",
+										"evaluations",
+										"synthetic"
+									],
+									"query": [
+										{
+											"key": "cycle_id",
+											"value": "{{cycle_id}}"
+										}
+									]
+								},
+								"description": "Retorna o relatório sintético das avaliações de um ciclo específico, com uma visão consolidada dos resultados."
+							},
+							"response": []
+						},
+						{
+							"name": "/reports/evaluations/results?cycle_id={{id_cycle}}",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"const json = pm.response.json();",
+											"",
+											"pm.test(\"Status code é 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Resposta é um array\", function () {",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Cada item possui evaluated_id e evaluated_name\", function () {",
+											"    json.forEach(function (item) {",
+											"        pm.expect(item).to.have.property(\"evaluated_id\");",
+											"        pm.expect(item).to.have.property(\"evaluated_name\");",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"Médias são números ou nulos\", function () {",
+											"    json.forEach(function (item) {",
+											"        [\"self_average\", \"manager_average\", \"team_average\"].forEach(function (field) {",
+											"            pm.expect(item[field]).to.satisfy(function (val) {",
+											"                return val === null || typeof val === \"number\";",
+											"            }, field + \" deve ser número ou nulo\");",
+											"        });",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{env}}/reports/evaluations/results?cycle_id={{cycle_id}}",
+									"host": [
+										"{{env}}"
+									],
+									"path": [
+										"reports",
+										"evaluations",
+										"results"
+									],
+									"query": [
+										{
+											"key": "cycle_id",
+											"value": "{{cycle_id}}"
+										}
+									]
+								},
+								"description": "Retorna os resultados finais das avaliações de um ciclo específico, apresentando as notas e conclusões gerais."
+							},
+							"response": []
+						}
+					],
+					"description": "Agrupa os endpoints responsáveis pela geração de relatórios de desempenho. Permite consultar relatórios por time, por colaborador e por ciclo de avaliação, nas modalidades analítica, sintética e de resultados finais."
+				}
+			]
+		}
+	]
+}
