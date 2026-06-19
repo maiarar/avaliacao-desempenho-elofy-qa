@@ -5,7 +5,7 @@ import { createEmployee } from '../commons.js'
 
 let team_id = 1
 let manager_id = 1
-let employee_id = null
+let new_employee_id = null
 
 describe('Employees', () => {
 
@@ -16,7 +16,7 @@ describe('Employees', () => {
             expect(employee).toHaveProperty('id')
             expect(employee).toHaveProperty('name')
 
-            employee_id = employee.id
+            new_employee_id = employee.id
         })
 
         it('deve retornar 400 ao enviar dados inválidos', async () => {
@@ -51,7 +51,7 @@ describe('Employees', () => {
             }
 
             const res = await request(API_BASE_URL)
-                .put('/employees/' + employee_id)
+                .put('/employees/' + new_employee_id)
                 .send(updateData)
 
             expect([200, 204]).toContain(res.status)
@@ -76,7 +76,7 @@ describe('Employees', () => {
     describe('DELETE /employees/:id', () => {
         it('deve deletar um funcionário com status 204 ou 200', async () => {
             const res = await request(API_BASE_URL)
-                .delete('/employees/' + employee_id)
+                .delete('/employees/' + new_employee_id)
 
             // expect([200, 204]).toContain(res.status)
             if (![200, 204].includes(res.status)) {
